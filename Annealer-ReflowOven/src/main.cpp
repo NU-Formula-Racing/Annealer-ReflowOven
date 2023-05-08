@@ -8,7 +8,7 @@
 #include "max6675.h"
 #include "pin_config.h"
 
-uint8_t ssr_pin = 40;  // todo: change
+uint8_t ssr_pin = 40;  // todo: check all pins
 
 uint8_t thermo_do = PIN_IIC_SDA;
 uint8_t thermo_cs = PIN_IIC_SCL;
@@ -18,6 +18,7 @@ LEDStrip led_strip{};
 
 MAX6675 thermocouple(thermo_clk, thermo_cs, thermo_do);
 PIDControl* pid;
+WebInterface web_interface{"NFR Annealer", "annealer_pass", *pid};
 
 Config config{"/config.hex"};
 
@@ -29,8 +30,7 @@ void setup()
 
     if (!config.ReadConfig())
     {
-        config.config_struct =
-            Config::ConfigStruct{.default_temperature = 0, .default_timer = 0, .kp = 0, .ki = 0, .kd = 0};
+        config.config_struct = Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 0, .ki = 0, .kd = 0};
         config.WriteConfig();
     }
 
@@ -47,6 +47,8 @@ void setup()
         }
     }
 
+    web_interface.Init();
+
     xTaskCreate(
         [](void* param)
         {
@@ -58,6 +60,8 @@ void setup()
         NULL,
         3,  // priority, higher is higher
         NULL);
+
+    xTaskCreate([](void* param) { web_interface.Task(); }, "web_interface_task", 4096, NULL, 2, NULL);
 
     vTaskDelete(NULL);  // skip main loop
     // put your setup code here, to run once:

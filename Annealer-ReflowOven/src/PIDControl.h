@@ -41,7 +41,7 @@ public:
         if (!tuning_)
         {
             setpoint_ = setpoint;
-            config.config_struct.temperature = setpoint;
+            config_.config_struct.temperature = setpoint;
         }
     }
 
@@ -128,7 +128,7 @@ public:
         if (!tuning_)
         {
             timer_ = time;
-            config.config_struct.timer = time;
+            config_.config_struct.timer = time;
         }
     }
 
