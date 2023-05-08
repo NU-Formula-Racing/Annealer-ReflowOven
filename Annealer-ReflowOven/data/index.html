@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="stylesheet" type="text/css" href="battery.css" />
+  <head>
+    <script type="text/javascript">
+      const ws = new WebSocket("ws://192.168.4.1/ws");
+
+      ws.onopen = function () {
+        alert("Connection opened");
+      };
+
+      ws.onclose = function () {
+        alert("Connection closed");
+      };
+
+      const num_segments = 7;
+      const num_cells_per_segment = 20;
+      const num_thermistors_per_segment = 16;
+
+      ws.onmessage = function (event) {
+        let data = JSON.parse(event.data);
+        let data_div = document.getElementById("data");
+        data_div.innerHTML =
+          "Data:<br />Current temperature: " +
+          data["temperature"] +
+          "C<br />Temperature setpoint: " +
+          data["setpoint"] +
+          "C<br />Enabled?: " +
+          data["enabled"] +
+          "<br />Duty cycle: " +
+          data["duty_cycle"] +
+          "<br />Remaining time: " +
+          data["remaining_time"] / (1000 * 60 * 60) +
+          "H<br />Set time: " +
+          data["timer"] / (1000 * 60 * 60) +
+          "H<br /><br />";
+      };
+
+      function getHue(temperature) {
+        var maxHsl = 380;
+        var minHsl = 170;
+        var rngHsl = maxHsl - minHsl;
+
+        var maxTemp = 60;
+        var minTemp = -20;
+        var rngTemp = maxTemp - minTemp;
+        temperature = Math.min(Math.max(temperature, minTemp), maxTemp); //clamp
+        var degCnt = maxTemp - temperature;
+        var hslsDeg = rngHsl / rngTemp;
+        return 360 - (degCnt * hslsDeg - (maxHsl - 360));
+      }
+
+      window.addEventListener("load", onLoad);
+
+      function onLoad(event) {
+        document.getElementById("enable").addEventListener("click", () => {
+          ws.send(JSON.stringify({ action: "enable" }));
+        });
+
+        document.getElementById("disable").addEventListener("click", () => {
+          ws.send(JSON.stringify({ action: "disable" }));
+        });
+
+        document
+          .getElementById("write_config")
+          .addEventListener("click", () => {
+            ws.send(JSON.stringify({ action: "write_config" }));
+          });
+
+        document
+          .getElementById("temperature_form")
+          .addEventListener("submit", () =>
+            ws.send(
+              JSON.stringify({
+                setpoint: document.getElementById("temperature").valueAsNumber,
+              })
+            )
+          );
+
+        document.getElementById("timer_form").addEventListener("submit", () =>
+          ws.send(
+            JSON.stringify({
+              time:
+                document.getElementById("timer").valueAsNumber * 1000 * 60 * 60,
+            })
+          )
+        );
+      }
+    </script>
+  </head>
+
+  <body>
+    <button id="enable">Enable</button>
+    <button id="disable">Disable</button>
+    <form id="temperature_form">
+      Set Temperature (C): <input type="number" id="temperature" />
+    </form>
+    <form id="timer_form">
+      Set Timer (H): <input type="number" id="timer" />
+    </form>
+    <button id="write_config">Write Config</button>
+    <div id="data"></div>
+  </body>
+</html>
