@@ -1,8 +1,8 @@
 #pragma once
 
 /*DEBUG*/
-#define WIFI_SSID "Oven"
-#define WIFI_PASSWORD "OvenPass"
+#define WIFI_SSID "NFR Annealer"
+#define WIFI_PASSWORD "annealer_pass"
 
 #define WIFI_CONNECT_WAIT_MAX (30 * 1000)
 

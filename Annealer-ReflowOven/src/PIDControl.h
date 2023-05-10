@@ -19,19 +19,22 @@ public:
                Config& config)
         : kPwmPin{pwm_pin},
           kPwmFrequency{pwm_frequency},
-          pwm_{new ESP32_FAST_PWM(kPwmPin, kPwmFrequency, 0)},
+          // pwm_{new ESP32_FAST_PWM(kPwmPin, kPwmFrequency, 0, 0, 14)},
           kControlLoopPeriod{control_loop_period},
           get_input_{get_input},
           config_{config},
           pid_controller_{&input_,
                           &output_,
-                          &setpoint_,
+                          &config_.config_struct.temperature,
                           config_.config_struct.kp,
                           config_.config_struct.ki,
                           config_.config_struct.kd,
                           DIRECT},
           pid_tuner_{}
     {
+        // ledcSetup(0, 10, 20);
+        pinMode(pwm_pin, OUTPUT);
+        digitalWrite(pwm_pin, LOW);
         pid_controller_.SetOutputLimits(0, 100);
         pid_controller_.SetSampleTime(kControlLoopPeriod * 0.9);  // less to make sure it actually runs every time
     }
@@ -40,7 +43,6 @@ public:
     {
         if (!tuning_)
         {
-            setpoint_ = setpoint;
             config_.config_struct.temperature = setpoint;
         }
     }
@@ -72,10 +74,24 @@ public:
                     output_ = 0;
                 }
             }
-            pwm_->setPWM(kPwmPin, kPwmFrequency, output_);
+            // pwm_->setPWM(kPwmPin, kPwmFrequency, output_);
 
             static TickType_t xLastWakeTime = xTaskGetTickCount();
-            xTaskDelayUntil(&xLastWakeTime, kControlLoopPeriod * portTICK_PERIOD_MS);
+            // manual pwm
+            uint32_t zero_crossing_per_period = 120 / (kControlLoopPeriod / 1000);
+            for (uint32_t i = 0; i < zero_crossing_per_period;
+                 i++)  // 120 zero-crossing points per second used to get resolution
+            {
+                if (output_ >= (100.0f * i / zero_crossing_per_period))
+                {
+                    digitalWrite(kPwmPin, HIGH);
+                }
+                else
+                {
+                    digitalWrite(kPwmPin, LOW);
+                }
+                xTaskDelayUntil(&xLastWakeTime, (1000 / 120) / portTICK_PERIOD_MS);  // ms per zero-crossing at 60hz
+            }
         }
     }
 
@@ -89,7 +105,7 @@ public:
         if (!tuning_)
         {
             tuning_ = true;
-            pid_tuner_.setTargetInputValue(setpoint_);
+            pid_tuner_.setTargetInputValue(config_.config_struct.temperature);
             pid_tuner_.setLoopInterval(kControlLoopPeriod * 1000);
             pid_tuner_.setOutputRange(0, 100);
             pid_tuner_.setZNMode(PIDAutotuner::ZNModeBasicPID);
@@ -103,13 +119,13 @@ public:
 
     void Disable() { enabled_ = false; }
 
-    double GetInput() { return get_input_(); }
+    double GetInput() { return input_; }
 
     bool GetEnabled() { return enabled_; }
 
-    bool GetDutyCycle() { return output_; }
+    double GetDutyCycle() { return output_; }
 
-    double GetSetpoint() { return setpoint_; }
+    double GetSetpoint() { return config_.config_struct.temperature; }
 
     uint32_t GetTimeRemaining()
     {
@@ -141,7 +157,7 @@ private:
 
     const uint8_t kPwmPin;
     const float kPwmFrequency;
-    ESP32_FAST_PWM* pwm_;
+    // ESP32_FAST_PWM* pwm_;
     const uint32_t kControlLoopPeriod;
     std::function<double(void)> get_input_;
     Config& config_;
@@ -154,7 +170,6 @@ private:
 
     double input_;
     double output_;
-    double setpoint_;
 
     void SetTunings(double kp, double ki, double kd)
     {

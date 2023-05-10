@@ -14,6 +14,7 @@ class WebInterface
 public:
     WebInterface(const char *ssid, const char *password, PIDControl &pid_control) : pid_control_{pid_control}
     {
+        // WiFi.mode(WIFI_MODE_AP);
         WiFi.softAP(ssid, password);
     }
 
@@ -32,6 +33,7 @@ public:
             if (millis() > last_notify + 100)
             {
                 notifyClients();
+                last_notify = millis();
             }
             dnsServer.processNextRequest();
             taskYIELD();

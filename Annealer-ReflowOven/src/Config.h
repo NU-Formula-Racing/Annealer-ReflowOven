@@ -9,7 +9,7 @@ public:
 
     struct ConfigStruct
     {
-        float temperature;
+        double temperature;
         uint32_t timer;
         float kp;
         float ki;

@@ -61,6 +61,10 @@
           ws.send(JSON.stringify({ action: "disable" }));
         });
 
+        document.getElementById("autotune").addEventListener("click", () => {
+          ws.send(JSON.stringify({ action: "autotune" }));
+        });
+
         document
           .getElementById("write_config")
           .addEventListener("click", () => {
@@ -92,13 +96,14 @@
   <body>
     <button id="enable">Enable</button>
     <button id="disable">Disable</button>
+    <button id="autotune">Autotune PID</button>
     <form id="temperature_form">
       Set Temperature (C): <input type="number" id="temperature" />
     </form>
     <form id="timer_form">
       Set Timer (H): <input type="number" id="timer" />
     </form>
-    <button id="write_config">Write Config</button>
     <div id="data"></div>
+    <button id="write_config">Write Config</button>
   </body>
 </html>
