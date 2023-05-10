@@ -25,15 +25,21 @@
           data["temperature"] +
           "C<br />Temperature setpoint: " +
           data["setpoint"] +
-          "C<br />Enabled?: " +
-          data["enabled"] +
+          "C<br />State: " +
+          data["state"] +
           "<br />Duty cycle: " +
           data["duty_cycle"] +
           "<br />Remaining time: " +
           data["remaining_time"] / (1000 * 60 * 60) +
           "H<br />Set time: " +
           data["timer"] / (1000 * 60 * 60) +
-          "H<br /><br />";
+          "H<br />Kp: " +
+          data["kp"] +
+          ", Ki: " +
+          data["ki"] +
+          ", Kd: " +
+          data["kd"] +
+          "<br /><br />";
       };
 
       function getHue(temperature) {
@@ -96,7 +102,6 @@
   <body>
     <button id="enable">Enable</button>
     <button id="disable">Disable</button>
-    <button id="autotune">Autotune PID</button>
     <form id="temperature_form">
       Set Temperature (C): <input type="number" id="temperature" />
     </form>
@@ -104,6 +109,10 @@
       Set Timer (H): <input type="number" id="timer" />
     </form>
     <div id="data"></div>
+    <button id="autotune">
+      Autotune PID (Note: This only needs to be run at initial setup and may
+      take a very long time with heaters enabled, must disable oven first)
+    </button>
     <button id="write_config">Write Config</button>
   </body>
 </html>

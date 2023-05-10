@@ -110,7 +110,7 @@ void UI::Task()
     lv_label_set_text(title, "NFR Annealer");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 0);
 
-    const char *wifi_info_fmt_str{"SSID: %s, Pass: %s"};
+    const char *wifi_info_fmt_str{"SSID: %s, Pass: %s\nhttp://formula.annealer.nu/\n"};
     char wifi_info_str[100];
     sprintf(wifi_info_str, wifi_info_fmt_str, WIFI_SSID, WIFI_PASSWORD);
     lv_obj_t *wifi_info = lv_label_create(lv_scr_act());
@@ -119,24 +119,25 @@ void UI::Task()
 
     const char *status_fmt_str{"Heater output: %5.2f"};
     char status_str[100];
-    sprintf(status_str, status_fmt_str, pid_control_->GetDutyCycle());
+    // sprintf(status_str, status_fmt_str, pid_control_->GetDutyCycle());
     lv_obj_t *status = lv_label_create(lv_scr_act());
-    lv_label_set_text(status, status_str);
-    lv_obj_align_to(status, wifi_info, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    // lv_label_set_text(status, status_str);
 
     const char *temperature_fmt_str{"Temperature: %5.2fC"};
     char temperature_str[100];
-    sprintf(temperature_str, temperature_fmt_str, pid_control_->GetInput());
+    // sprintf(temperature_str, temperature_fmt_str, pid_control_->GetInput());
     lv_obj_t *temperature = lv_label_create(lv_scr_act());
-    lv_label_set_text(temperature, temperature_str);
-    lv_obj_align_to(temperature, status, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    // lv_label_set_text(temperature, temperature_str);
 
     const char *temperature_setpoint_fmt_str{"Temperature setpoint: %5.2fC"};
     char temperature_setpoint_str[100];
-    sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
+    // sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
     lv_obj_t *temperature_setpoint = lv_label_create(lv_scr_act());
-    lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
-    lv_obj_align_to(temperature_setpoint, temperature, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+    // lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
+
+    const char *tuning_fmt_str{"Kp: %5.5f, Ki: %5.5f, Kd: %5.5f"};
+    char tuning_str[100];
+    lv_obj_t *tuning = lv_label_create(lv_scr_act());
 
     attachInterrupt(
         digitalPinToInterrupt(PIN_ENCODE_A), []() { encoder_->tick(); }, CHANGE);
@@ -167,7 +168,13 @@ void UI::Task()
         sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
         lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
 
-        lv_event_send(temperature, LV_EVENT_REFRESH, NULL);
+        sprintf(tuning_str, tuning_fmt_str, pid_control_->GetKp(), pid_control_->GetKi(), pid_control_->GetKd());
+        lv_label_set_text(tuning, tuning_str);
+
+        lv_obj_align_to(status, wifi_info, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+        lv_obj_align_to(temperature, status, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+        lv_obj_align_to(temperature_setpoint, temperature, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+        lv_obj_align_to(tuning, temperature_setpoint, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
         // button.tick();
         // lv_task_handler();

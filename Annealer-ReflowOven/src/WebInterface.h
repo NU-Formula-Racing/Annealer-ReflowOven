@@ -61,10 +61,13 @@ private:
         static StaticJsonDocument<10000> doc;
         doc["temperature"] = pid_control_.GetInput();
         doc["setpoint"] = pid_control_.GetSetpoint();
-        doc["enabled"] = pid_control_.GetEnabled();
+        doc["state"] = pid_control_.GetEnabled() ? "Enabled" : pid_control_.GetTuning() ? "Tuning" : "Disabled";
         doc["duty_cycle"] = pid_control_.GetDutyCycle();
         doc["remaining_time"] = pid_control_.GetTimeRemaining();
         doc["timer"] = pid_control_.GetTimer();
+        doc["kp"] = pid_control_.GetKp();
+        doc["ki"] = pid_control_.GetKi();
+        doc["kd"] = pid_control_.GetKd();
 
         static char data[10000];
         size_t len = serializeJson(doc, data);

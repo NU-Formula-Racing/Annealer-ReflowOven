@@ -82,7 +82,7 @@ public:
             for (uint32_t i = 0; i < zero_crossing_per_period;
                  i++)  // 120 zero-crossing points per second used to get resolution
             {
-                if (output_ >= (100.0f * i / zero_crossing_per_period))
+                if (output_ >= (100.0f * i / zero_crossing_per_period) && output_ != 0)
                 {
                     digitalWrite(kPwmPin, HIGH);
                 }
@@ -102,7 +102,7 @@ public:
     // autotunes at the setpoint
     void Autotune()
     {
-        if (!tuning_)
+        if (!tuning_ && !enabled_)
         {
             tuning_ = true;
             pid_tuner_.setTargetInputValue(config_.config_struct.temperature);
