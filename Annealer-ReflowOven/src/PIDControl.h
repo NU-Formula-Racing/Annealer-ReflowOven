@@ -108,7 +108,7 @@ public:
             pid_tuner_.setTargetInputValue(config_.config_struct.temperature);
             pid_tuner_.setLoopInterval(kControlLoopPeriod * 1000);
             pid_tuner_.setOutputRange(0, 100);
-            pid_tuner_.setZNMode(PIDAutotuner::ZNModeBasicPID);
+            pid_tuner_.setZNMode(PIDAutotuner::ZNModeLessOvershoot);
             pid_tuner_.startTuningLoop(micros());
         }
     }
@@ -177,6 +177,7 @@ private:
         config_.config_struct.kp = kp;
         config_.config_struct.kp = ki;
         config_.config_struct.kp = kd;
+        pid_controller_.SetTunings(kp, ki, kd);
         config_.WriteConfig();
     }
 };
