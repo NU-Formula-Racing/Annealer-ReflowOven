@@ -110,7 +110,7 @@ void UI::Task()
     lv_label_set_text(title, "NFR Annealer");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 0);
 
-    const char *wifi_info_fmt_str{"SSID: %s, Pass: %s\nhttp://formula.annealer.nu/\nIf on a phone, disable cellular\n"};
+    const char *wifi_info_fmt_str{"SSID: %s, Pass: %s\nhttp://formula.annealer.nu/\nIf on phone, disable cellular\n"};
     char wifi_info_str[100];
     sprintf(wifi_info_str, wifi_info_fmt_str, WIFI_SSID, WIFI_PASSWORD);
     lv_obj_t *wifi_info = lv_label_create(lv_scr_act());
