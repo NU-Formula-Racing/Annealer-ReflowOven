@@ -9,7 +9,7 @@ public:
 
     struct ConfigStruct
     {
-        double temperature;
+        float temperature;
         uint32_t timer;
         float kp;
         float ki;
@@ -19,15 +19,16 @@ public:
     void WriteConfig()
     {
         // SPIFFS.begin();
+
         SPIFFS.remove(filename_);
-        File file = SPIFFS.open(filename_, FILE_WRITE);
+        File file = SPIFFS.open(filename_, FILE_WRITE, true);
         void *config_pointer = &config_struct;
         for (uint16_t i = 0; i < sizeof(config_struct); i++)
         {
             file.write(reinterpret_cast<uint8_t *>(config_pointer)[i]);
         }
         file.close();
-        // SPIFFS.end();
+        //    SPIFFS.end();
     }
 
     bool ReadConfig()

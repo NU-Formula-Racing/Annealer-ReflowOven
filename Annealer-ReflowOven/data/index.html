@@ -21,15 +21,15 @@
         let data = JSON.parse(event.data);
         let data_div = document.getElementById("data");
         data_div.innerHTML =
-          "Data:<br />Current temperature: " +
+          "Data:<br />State: " +
+          data["state"] +
+          ", Duty cycle: " +
+          data["duty_cycle"] +
+          "<br />Current temperature: " +
           data["temperature"] +
           "C<br />Temperature setpoint: " +
           data["setpoint"] +
-          "C<br />State: " +
-          data["state"] +
-          "<br />Duty cycle: " +
-          data["duty_cycle"] +
-          "<br />Remaining time: " +
+          "C<br />Remaining time: " +
           data["remaining_time"] / (1000 * 60 * 60) +
           "H<br />Set time: " +
           data["timer"] / (1000 * 60 * 60) +
@@ -111,8 +111,11 @@
     <div id="data"></div>
     <button id="autotune">
       Autotune PID (Note: This only needs to be run at initial setup and may
-      take a very long time with heaters enabled, must disable oven first)
+      take a while with heaters enabled, must disable oven and let it cool down
+      first)
     </button>
-    <button id="write_config">Write Config</button>
+    <button id="write_config">
+      Write Config (click after autotune is finished)
+    </button>
   </body>
 </html>

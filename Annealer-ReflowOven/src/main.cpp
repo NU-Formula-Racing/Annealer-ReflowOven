@@ -55,16 +55,18 @@ void setup()
             // onboard_led.on = millis() % 200 < 50;
             // onboard_led.update();
         } */
-        config.config_struct = Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 0, .ki = 0, .kd = 0};
+        config.config_struct =
+            Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 7.089982033, .ki = 0.010629718, .kd = 0.059879143};
     }
-    else if (!config.ReadConfig())
+    else  // if (!config.ReadConfig())
     {
-        config.config_struct = Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 0, .ki = 0, .kd = 0};
+        config.config_struct =
+            Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 7.089982033, .ki = 0.010629718, .kd = 0.059879143};
         config.WriteConfig();
     }
 
     pid = new PIDControl(
-        ssr_pin, 6, 1000, []() { return thermocouple.readCelsius(); }, config);
+        ssr_pin, 6, 1000, []() { return thermocouple.readCelsius(); }, &config);
 
     ui = new UI{button, encoder, tft, pid};
 
