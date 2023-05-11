@@ -1,3 +1,8 @@
+#pragma once
+
+#define LV_CONF_SUPPRESS_DEFINE_CHECK
+#define DISABLE_ALL_LIBRARY_WARNINGS
+
 #include "OneButton.h"
 #include "PIDControl.h"
 #include "RotaryEncoder.h"

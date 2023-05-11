@@ -1,5 +1,7 @@
 #include <Arduino.h>
 
+#define DISABLE_ALL_LIBRARY_WARNINGS  // no warning about TFT_eSPI no cs pin
+
 #include "ArduinoOTA.h"
 #include "Config.h"
 #include "LEDStrip.h"
@@ -42,31 +44,31 @@ void setup()
 {
     pinMode(PIN_POWER_ON, OUTPUT);
     digitalWrite(PIN_POWER_ON, HIGH);
-    // Serial.begin(115200);
-    // Serial.println("Starting");
+    Serial.begin(115200);
+    Serial.println("Starting");
 
     lv_init();
 
     if (!SPIFFS.begin())
     {
-        // Serial.println("Cannot mount SPIFFS volume...");
+        Serial.println("Cannot mount SPIFFS volume...");
         /* while (1)
         {
             // onboard_led.on = millis() % 200 < 50;
             // onboard_led.update();
         } */
         config.config_struct =
-            Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 7.089982033, .ki = 0.010629718, .kd = 0.059879143};
+            Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 5.502096176, .ki = 0.009857209, .kd = 0.047900259};
     }
     else if (!config.ReadConfig())
     {
         config.config_struct =
-            Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 7.089982033, .ki = 0.010629718, .kd = 0.059879143};
+            Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 5.502096176, .ki = 0.009857209, .kd = 0.047900259};
         config.WriteConfig();
     }
 
     pid = new PIDControl(
-        ssr_pin, 6, 1000, []() { return thermocouple.readCelsius(); }, config, []() { web_interface->WriteConfig(); });
+        ssr_pin, 1000, []() { return thermocouple.readCelsius(); }, config, []() { web_interface->WriteConfig(); });
 
     ui = new UI{button, encoder, tft, pid};
 

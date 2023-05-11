@@ -5,9 +5,9 @@
 #include <functional>
 
 #include "Config.h"
-#include "ESP32_FastPWM.h"
-// #include "PID_v1.h"
-//  #include "pidautotuner.h"
+// #include "ESP32_FastPWM.h"
+//  #include "PID_v1.h"
+//   #include "pidautotuner.h"
 #include "QuickPID.h"
 #include "sTune.h"
 
@@ -15,14 +15,14 @@ class PIDControl
 {
 public:
     PIDControl(uint8_t pwm_pin,
-               float pwm_frequency,
+               // float pwm_frequency,
                uint32_t control_loop_period,
                std::function<double(void)> get_input,
                Config& config,
                std::function<void(void)> write_config)
         : kPwmPin{pwm_pin},
-          kPwmFrequency{pwm_frequency},
-          // pwm_{new ESP32_FAST_PWM(kPwmPin, kPwmFrequency, 0, 0, 14)},
+          // kPwmFrequency{pwm_frequency},
+          //  pwm_{new ESP32_FAST_PWM(kPwmPin, kPwmFrequency, 0, 0, 14)},
           kControlLoopPeriod{control_loop_period},
           get_input_{get_input},
           config_{config},
@@ -190,8 +190,8 @@ private:
     bool enabled_ = false;
 
     const uint8_t kPwmPin;
-    const float kPwmFrequency;
-    // ESP32_FAST_PWM* pwm_;
+    // const float kPwmFrequency;
+    //  ESP32_FAST_PWM* pwm_;
     const uint32_t kControlLoopPeriod;
     std::function<double(void)> get_input_;
     Config& config_;

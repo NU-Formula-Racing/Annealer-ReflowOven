@@ -43,6 +43,7 @@ public:
             if (write_config_requested_)
             {
                 config_.WriteConfig();
+                write_config_requested_ = false;
             }
             taskYIELD();
         }

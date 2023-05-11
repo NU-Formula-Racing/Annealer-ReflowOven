@@ -22,10 +22,11 @@ public:
         SPIFFS.remove(filename_);
         File file = SPIFFS.open(filename_, FILE_WRITE, true);
         void *config_pointer = &config_struct;
-        for (uint16_t i = 0; i < sizeof(config_struct); i++)
+        file.write(reinterpret_cast<uint8_t *>(config_pointer), sizeof(config_struct));
+        /* for (uint16_t i = 0; i < sizeof(config_struct); i++)
         {
             file.write(reinterpret_cast<uint8_t *>(config_pointer)[i]);
-        }
+        } */
         file.close();
         //    SPIFFS.end();
     }
@@ -33,16 +34,17 @@ public:
     bool ReadConfig()
     {
         // SPIFFS.begin();
-        File file = SPIFFS.open(filename_, FILE_READ);
-        if (!file)
+        if (!SPIFFS.exists(filename_))
         {
             return false;
         }
+        File file = SPIFFS.open(filename_, FILE_READ);
         void *config_pointer = &config_struct;
-        for (uint16_t i = 0; i < sizeof(config_struct) && file.available(); i++)
+        file.read(reinterpret_cast<uint8_t *>(config_pointer), sizeof(config_struct));
+        /* for (uint16_t i = 0; i < sizeof(config_struct) && file.available(); i++)
         {
             reinterpret_cast<uint8_t *>(config_pointer)[i] = file.read();
-        }
+        } */
         file.close();
         return true;
         // SPIFFS.end();
