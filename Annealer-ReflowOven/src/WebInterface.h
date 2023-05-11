@@ -7,12 +7,14 @@
 #include <SPIFFS.h>
 #include <WiFi.h>
 
+#include "Config.h"
 #include "PIDControl.h"
 
 class WebInterface
 {
 public:
-    WebInterface(const char *ssid, const char *password, PIDControl &pid_control) : pid_control_{pid_control}
+    WebInterface(const char *ssid, const char *password, PIDControl &pid_control, Config &config)
+        : pid_control_{pid_control}, config_{config}
     {
         // WiFi.mode(WIFI_MODE_AP);
         WiFi.softAP(ssid, password);
@@ -25,6 +27,8 @@ public:
         dnsServer.start(kDnsPort, "*", WiFi.softAPIP());
     }
 
+    void WriteConfig() { write_config_requested_ = true; }
+
     void Task()
     {
         uint32_t last_notify = millis();
@@ -36,16 +40,22 @@ public:
                 last_notify = millis();
             }
             dnsServer.processNextRequest();
+            if (write_config_requested_)
+            {
+                config_.WriteConfig();
+            }
             taskYIELD();
         }
     }
 
 private:
     PIDControl &pid_control_;
+    Config &config_;
     const byte kDnsPort{53};
     DNSServer dnsServer;
     AsyncWebServer server{80};
     AsyncWebSocket ws{"/ws"};
+    bool write_config_requested_ = false;
 
     void onRootRequest(AsyncWebServerRequest *request) { request->send(SPIFFS, "/index.html", "text/html"); }
 
@@ -116,7 +126,7 @@ private:
                 }
                 else if (strcmp(action, "write_config") == 0)
                 {
-                    pid_control_.WriteConfig();
+                    WriteConfig();
                 }
             }
         }

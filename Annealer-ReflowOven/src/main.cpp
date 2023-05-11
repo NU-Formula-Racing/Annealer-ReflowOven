@@ -58,7 +58,7 @@ void setup()
         config.config_struct =
             Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 7.089982033, .ki = 0.010629718, .kd = 0.059879143};
     }
-    else  // if (!config.ReadConfig())
+    else if (!config.ReadConfig())
     {
         config.config_struct =
             Config::ConfigStruct{.temperature = 0, .timer = 0, .kp = 7.089982033, .ki = 0.010629718, .kd = 0.059879143};
@@ -66,11 +66,11 @@ void setup()
     }
 
     pid = new PIDControl(
-        ssr_pin, 6, 1000, []() { return thermocouple.readCelsius(); }, &config);
+        ssr_pin, 6, 1000, []() { return thermocouple.readCelsius(); }, config, []() { web_interface->WriteConfig(); });
 
     ui = new UI{button, encoder, tft, pid};
 
-    web_interface = new WebInterface{WIFI_SSID, WIFI_PASSWORD, *pid};
+    web_interface = new WebInterface{WIFI_SSID, WIFI_PASSWORD, *pid, config};
 
     web_interface->Init();
 

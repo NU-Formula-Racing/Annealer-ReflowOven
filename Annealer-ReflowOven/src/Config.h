@@ -19,7 +19,6 @@ public:
     void WriteConfig()
     {
         // SPIFFS.begin();
-
         SPIFFS.remove(filename_);
         File file = SPIFFS.open(filename_, FILE_WRITE, true);
         void *config_pointer = &config_struct;

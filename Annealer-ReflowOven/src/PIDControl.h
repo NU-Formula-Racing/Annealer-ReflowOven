@@ -18,19 +18,21 @@ public:
                float pwm_frequency,
                uint32_t control_loop_period,
                std::function<double(void)> get_input,
-               Config* config)
+               Config& config,
+               std::function<void(void)> write_config)
         : kPwmPin{pwm_pin},
           kPwmFrequency{pwm_frequency},
           // pwm_{new ESP32_FAST_PWM(kPwmPin, kPwmFrequency, 0, 0, 14)},
           kControlLoopPeriod{control_loop_period},
           get_input_{get_input},
           config_{config},
+          write_config_{write_config},
           pid_controller_{&input_,
                           &output_,
-                          &config_->config_struct.temperature,
-                          config_->config_struct.kp,
-                          config_->config_struct.ki,
-                          config_->config_struct.kd,
+                          &config_.config_struct.temperature,
+                          config_.config_struct.kp,
+                          config_.config_struct.ki,
+                          config_.config_struct.kd,
                           QuickPID::Action::direct},
           pid_tuner_{
               &input_, &output_, sTune::TuningMethod::Mixed_PID, sTune::Action::directIP, sTune::SerialMode::printOFF}
@@ -46,7 +48,7 @@ public:
     {
         if (!tuning_)
         {
-            config_->config_struct.temperature = setpoint;
+            config_.config_struct.temperature = setpoint;
         }
     }
 
@@ -68,13 +70,13 @@ public:
                 switch (pid_tuner_.Run())
                 {
                     case pid_tuner_.tunings:  // active just once when sTune is done
-                        pid_tuner_.GetAutoTunings(&config_->config_struct.kp,
-                                                  &config_->config_struct.ki,
-                                                  &config_->config_struct.kd);  // sketch variables updated by sTune
+                        pid_tuner_.GetAutoTunings(&config_.config_struct.kp,
+                                                  &config_.config_struct.ki,
+                                                  &config_.config_struct.kd);   // sketch variables updated by sTune
                         pid_controller_.SetMode(QuickPID::Control::automatic);  // the PID is turned on
-                        SetTunings(config_->config_struct.kp,
-                                   config_->config_struct.ki,
-                                   config_->config_struct.kd);  // update PID with the new tunings
+                        SetTunings(config_.config_struct.kp,
+                                   config_.config_struct.ki,
+                                   config_.config_struct.kd);  // update PID with the new tunings
                         tuning_ = false;
                         output_ = 0;
                         break;
@@ -127,9 +129,9 @@ public:
         }
     }
 
-    double GetKp() { return /*config_->config_struct.kp; */ pid_controller_.GetKp(); }
-    double GetKi() { return /*config_->config_struct.ki; */ pid_controller_.GetKi(); }
-    double GetKd() { return /*config_->config_struct.kd; */ pid_controller_.GetKd(); }
+    double GetKp() { return /*config.config_struct.kp; */ pid_controller_.GetKp(); }
+    double GetKi() { return /*config.config_struct.ki; */ pid_controller_.GetKi(); }
+    double GetKd() { return /*config.config_struct.kd; */ pid_controller_.GetKd(); }
 
     // autotunes at the setpoint
     void Autotune()
@@ -139,7 +141,7 @@ public:
             tuning_ = true;
             pid_tuner_.Configure(300, 100, 0, 100, 600, 0, 500);
             /* pid_tuner_.setTuningCycles(kTuningCycles);
-            pid_tuner_.setTargetInputValue(config_->config_struct.temperature);
+            pid_tuner_.setTargetInputValue(config.config_struct.temperature);
             pid_tuner_.setLoopInterval(kControlLoopPeriod * 1000);
             pid_tuner_.setOutputRange(0, 100);
             pid_tuner_.setZNMode(PIDAutotuner::ZNModeLessOvershoot);
@@ -159,7 +161,7 @@ public:
 
     double GetDutyCycle() { return output_; }
 
-    double GetSetpoint() { return config_->config_struct.temperature; }
+    double GetSetpoint() { return config_.config_struct.temperature; }
 
     uint32_t GetTimeRemaining()
     {
@@ -178,13 +180,11 @@ public:
         if (!tuning_)
         {
             timer_ = time;
-            config_->config_struct.timer = time;
+            config_.config_struct.timer = time;
         }
     }
 
     uint32_t GetTimer() { return timer_; }
-
-    void WriteConfig() { config_->WriteConfig(); }
 
 private:
     bool enabled_ = false;
@@ -194,7 +194,8 @@ private:
     // ESP32_FAST_PWM* pwm_;
     const uint32_t kControlLoopPeriod;
     std::function<double(void)> get_input_;
-    Config* config_;
+    Config& config_;
+    std::function<void(void)> write_config_;
     QuickPID pid_controller_;
     sTune pid_tuner_;
     const uint8_t kTuningCycles = 2;
@@ -209,9 +210,10 @@ private:
     void SetTunings(float kp, float ki, float kd)
     {
         pid_controller_.SetTunings(kp, ki, kd);
-        config_->config_struct.kp = kp;
-        config_->config_struct.kp = ki;
-        config_->config_struct.kp = kd;
-        // config_->WriteConfig(); //crashes
+        config_.config_struct.kp = kp;
+        config_.config_struct.kp = ki;
+        config_.config_struct.kp = kd;
+        write_config_();
+        // config.WriteConfig(); //crashes because SPIFFS isn't thread safe, only call from WebInterface
     }
 };
