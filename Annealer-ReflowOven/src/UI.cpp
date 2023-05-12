@@ -135,6 +135,10 @@ void UI::Task()
     lv_obj_t *temperature_setpoint = lv_label_create(lv_scr_act());
     // lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
 
+    const char *timer_fmt_str{"Time remaining: %5.2f/%5.2fH"};
+    char timer_str[100];
+    lv_obj_t *timer = lv_label_create(lv_scr_act());
+
     const char *tuning_fmt_str{"Kp: %5.5f, Ki: %5.5f, Kd: %5.5f"};
     char tuning_str[100];
     lv_obj_t *tuning = lv_label_create(lv_scr_act());
@@ -168,13 +172,20 @@ void UI::Task()
         sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
         lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
 
+        sprintf(timer_str,
+                timer_fmt_str,
+                pid_control_->GetTimeRemaining() / (1000.0f * 3600.0f),
+                pid_control_->GetTimer() / (1000.0f * 3600.0f));
+        lv_label_set_text(timer, timer_str);
+
         sprintf(tuning_str, tuning_fmt_str, pid_control_->GetKp(), pid_control_->GetKi(), pid_control_->GetKd());
         lv_label_set_text(tuning, tuning_str);
 
         lv_obj_align_to(status, wifi_info, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
         lv_obj_align_to(temperature, status, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
         lv_obj_align_to(temperature_setpoint, temperature, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-        lv_obj_align_to(tuning, temperature_setpoint, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+        lv_obj_align_to(timer, temperature_setpoint, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+        lv_obj_align_to(tuning, timer, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
         // button.tick();
         // lv_task_handler();
