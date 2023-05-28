@@ -135,7 +135,7 @@ void setup()
 
 void loop()
 {
-    Serial.println("Loop is running");
+    // Serial.println("Loop is running");
     delay(1000);
     // put your main code here, to run repeatedly:
 }

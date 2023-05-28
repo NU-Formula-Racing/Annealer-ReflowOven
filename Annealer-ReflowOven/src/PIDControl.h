@@ -151,7 +151,11 @@ public:
 
     bool GetTuning() { return tuning_; }
 
-    void Enable() { enabled_ = true; }
+    void Enable()
+    {
+        enabled_ = true;
+        enable_time_ = millis();
+    }
 
     void Disable() { enabled_ = false; }
 

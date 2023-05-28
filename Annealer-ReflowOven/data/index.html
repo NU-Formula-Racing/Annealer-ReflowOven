@@ -19,10 +19,12 @@
 
       ws.onmessage = function (event) {
         let data = JSON.parse(event.data);
+        document.getElementById("temperature").setAttribute("placeholder", data["setpoint"]);
+        document.getElementById("timer").setAttribute("placeholder", data["timer"] / (1000 * 60 * 60));
         let data_div = document.getElementById("data");
         data_div.innerHTML =
           "Data:<br />State: " +
-          data["state"] +
+          (data["state"] == "Disabled" ? "<span style='color:red'>Disabled</span>" : "<span style='color:green'>" + data["state"] + "</span>") +
           ", Duty cycle: " +
           data["duty_cycle"] +
           "<br />Current temperature: " +
@@ -58,8 +60,38 @@
 
       window.addEventListener("load", onLoad);
 
+      function submitTemperature(event)
+      {
+        event.preventDefault();
+        if (document.getElementById("temperature").valueAsNumber > 0)
+        {
+            ws.send(
+              JSON.stringify({
+                setpoint: document.getElementById("temperature").valueAsNumber,
+              })
+            );
+        }
+      }
+
+      function submitTimer(event)
+      {
+        event.preventDefault();
+        if (document.getElementById("timer").valueAsNumber > 0)
+        {
+          ws.send(
+            JSON.stringify({
+              time:
+                document.getElementById("timer").valueAsNumber * 1000 * 60 * 60,
+            })
+          );
+          ws.send(JSON.stringify({ action: "enable" }));
+        }
+      }
+
       function onLoad(event) {
-        document.getElementById("enable").addEventListener("click", () => {
+        document.getElementById("enable").addEventListener("click", function(event) {
+          submitTemperature(event);
+          submitTimer(event);
           ws.send(JSON.stringify({ action: "enable" }));
         });
 
@@ -79,35 +111,30 @@
 
         document
           .getElementById("temperature_form")
-          .addEventListener("submit", () =>
-            ws.send(
-              JSON.stringify({
-                setpoint: document.getElementById("temperature").valueAsNumber,
-              })
-            )
-          );
+          .addEventListener("submit", submitTemperature);
 
-        document.getElementById("timer_form").addEventListener("submit", () =>
-          ws.send(
-            JSON.stringify({
-              time:
-                document.getElementById("timer").valueAsNumber * 1000 * 60 * 60,
-            })
-          )
-        );
+        document.getElementById("timer_form").addEventListener("submit", submitTimer);
+
+        if (window.location.href.indexOf("dev") == -1) {
+          document.getElementById("autotune").style.display = "none";
+
+          document.getElementById("write_config").style.display = "none";
+        }
       }
     </script>
   </head>
 
   <body>
-    <button id="enable">Enable</button>
-    <button id="disable">Disable</button>
     <form id="temperature_form">
-      Set Temperature (C): <input type="number" id="temperature" />
+      Set Temperature (C), then hit enter:
+      <input type="number" min="0" step="any" id="temperature" />
     </form>
     <form id="timer_form">
-      Set Timer (H): <input type="number" id="timer" />
+      Set Timer (H), then hit enter: <input type="number" min="0" step="any" id="timer" />
     </form>
+    <button id="enable">Enable</button>
+    <button id="disable">Disable</button>
+  <div id="linebreak"></br></div>
     <div id="data"></div>
     <button id="autotune">
       Autotune PID (Note: This only needs to be run at initial setup and may

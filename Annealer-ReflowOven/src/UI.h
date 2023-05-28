@@ -40,6 +40,8 @@ private:
 #define LV_BUTTON _BV(0)
 #define LV_ENCODER_CW _BV(1)
 #define LV_ENCODER_CCW _BV(2)
+#define LV_BUTTON_DOUBLE _BV(3)
+#define LV_BUTTON_HOLD _BV(3)
     static EventGroupHandle_t lv_input_event;
 
     static void lv_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p);

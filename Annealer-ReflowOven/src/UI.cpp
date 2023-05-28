@@ -44,6 +44,20 @@ void UI::Task()
             // xEventGroupSetBits(global_event_group, WAV_RING_1);
         },
         lv_input_event);
+    button_.attachDoubleClick(
+        [](void *param)
+        {
+            EventGroupHandle_t *lv_input_event = (EventGroupHandle_t *)param;
+            xEventGroupSetBits(lv_input_event, LV_BUTTON_DOUBLE);
+        },
+        lv_input_event);
+    button_.attachLongPressStart(
+        [](void *param)
+        {
+            EventGroupHandle_t *lv_input_event = (EventGroupHandle_t *)param;
+            xEventGroupSetBits(lv_input_event, LV_BUTTON_HOLD);
+        },
+        lv_input_event);
 
     lv_init();
     buf1 = (lv_color_t *)heap_caps_malloc(LV_BUF_SIZE * sizeof(lv_color_t), MALLOC_CAP_8BIT | MALLOC_CAP_SPIRAM);
@@ -106,89 +120,138 @@ void UI::Task()
         LV_EVENT_CLICKED,
         NULL); */
 
-    lv_obj_t *title = lv_label_create(lv_scr_act());
+    lv_obj_t *info_scr = lv_obj_create(NULL);
+    lv_obj_t *settings_scr = lv_obj_create(NULL);
+
+    lv_obj_t *title = lv_label_create(info_scr);
     lv_label_set_text(title, "NFR Annealer");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 0);
 
-    const char *wifi_info_fmt_str{"SSID: %s, Pass: %s\nhttp://formula.annealer.nu/\nIf on phone, disable cellular\n"};
+    const char *wifi_info_fmt_str{"WiFi: %s, Pass: %s\nhttp://formula.annealer.nu/\nIf on phone, disable cellular\n"};
     char wifi_info_str[100];
     sprintf(wifi_info_str, wifi_info_fmt_str, WIFI_SSID, WIFI_PASSWORD);
-    lv_obj_t *wifi_info = lv_label_create(lv_scr_act());
+    lv_obj_t *wifi_info = lv_label_create(info_scr);
     lv_label_set_text(wifi_info, wifi_info_str);
     lv_obj_align_to(wifi_info, title, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
     const char *status_fmt_str{"Heater output: %5.2f"};
     char status_str[100];
     // sprintf(status_str, status_fmt_str, pid_control_->GetDutyCycle());
-    lv_obj_t *status = lv_label_create(lv_scr_act());
+    lv_obj_t *status = lv_label_create(info_scr);
     // lv_label_set_text(status, status_str);
 
     const char *temperature_fmt_str{"Temperature: %5.2fC"};
     char temperature_str[100];
     // sprintf(temperature_str, temperature_fmt_str, pid_control_->GetInput());
-    lv_obj_t *temperature = lv_label_create(lv_scr_act());
+    lv_obj_t *temperature = lv_label_create(info_scr);
     // lv_label_set_text(temperature, temperature_str);
 
     const char *temperature_setpoint_fmt_str{"Temperature setpoint: %5.2fC"};
     char temperature_setpoint_str[100];
     // sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
-    lv_obj_t *temperature_setpoint = lv_label_create(lv_scr_act());
+    lv_obj_t *temperature_setpoint = lv_label_create(info_scr);
     // lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
 
     const char *timer_fmt_str{"Time remaining: %5.2f/%5.2fH"};
     char timer_str[100];
-    lv_obj_t *timer = lv_label_create(lv_scr_act());
+    lv_obj_t *timer = lv_label_create(info_scr);
 
     const char *tuning_fmt_str{"Kp: %5.5f, Ki: %5.5f, Kd: %5.5f"};
     char tuning_str[100];
-    lv_obj_t *tuning = lv_label_create(lv_scr_act());
+    lv_obj_t *tuning = lv_label_create(info_scr);
+
+    const char *set_temperature_fmt_str{"Set temperature: %5.2fC"};
+    char set_temperature_str[100];
+    lv_obj_t *set_temperature_btn = create_btn(settings_scr, set_temperature_fmt_str);
+
+    const char *set_timer_fmt_str{"Set timer: %5.2fC"};
+    char set_timer_str[100];
+    lv_obj_t *set_timer_btn = create_btn(settings_scr, set_timer_fmt_str);
+
+    const char *enable_str{"Enable"};
+    lv_obj_t *enable_btn = create_btn(settings_scr, enable_str);
+
+    const char *disable_str{"Disable"};
+    lv_obj_t *disable_btn = create_btn(settings_scr, disable_str);
 
     attachInterrupt(
         digitalPinToInterrupt(PIN_ENCODE_A), []() { encoder_->tick(); }, CHANGE);
     attachInterrupt(
         digitalPinToInterrupt(PIN_ENCODE_B), []() { encoder_->tick(); }, CHANGE);
 
+    enum class Screen
+    {
+        kInfoScreen,
+        kSettingsScren
+    };
+
+    Screen current_screen = Screen::kInfoScreen;
+
+    lv_scr_load(info_scr);
+
     while (1)
     {
         delay(1);
         // Serial.println("UI loop");
-        if (pid_control_->GetEnabled())
+        if (xEventGroupGetBits(lv_input_event) & LV_BUTTON_HOLD)
         {
-            sprintf(status_str, status_fmt_str, pid_control_->GetDutyCycle());
-            lv_label_set_text(status, status_str);
+            if (current_screen == Screen::kInfoScreen)
+            {
+                lv_scr_load(settings_scr);
+                current_screen = Screen::kSettingsScren;
+            }
+            else if (current_screen == Screen::kSettingsScren)
+            {
+                lv_scr_load(info_scr);
+                current_screen = Screen::kInfoScreen;
+            }
         }
-        else if (pid_control_->GetTuning())
+
+        if (current_screen == Screen::kInfoScreen)
         {
-            sprintf(status_str, "Tuning, heater output: %5.2f", pid_control_->GetDutyCycle());
-            lv_label_set_text(status, status_str);
+            if (pid_control_->GetEnabled())
+            {
+                sprintf(status_str, status_fmt_str, pid_control_->GetDutyCycle());
+                lv_label_set_text(status, status_str);
+            }
+            else if (pid_control_->GetTuning())
+            {
+                sprintf(status_str, "Tuning, heater output: %5.2f", pid_control_->GetDutyCycle());
+                lv_label_set_text(status, status_str);
+            }
+            else
+            {
+                lv_label_set_text(status, "Disabled");
+            }
+            sprintf(temperature_str, temperature_fmt_str, pid_control_->GetInput());
+            lv_label_set_text(temperature, temperature_str);
+
+            sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
+            lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
+
+            sprintf(timer_str,
+                    timer_fmt_str,
+                    pid_control_->GetTimeRemaining() / (1000.0f * 3600.0f),
+                    pid_control_->GetTimer() / (1000.0f * 3600.0f));
+            lv_label_set_text(timer, timer_str);
+
+            sprintf(tuning_str, tuning_fmt_str, pid_control_->GetKp(), pid_control_->GetKi(), pid_control_->GetKd());
+            lv_label_set_text(tuning, tuning_str);
+
+            lv_obj_align_to(status, wifi_info, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+            lv_obj_align_to(temperature, status, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+            lv_obj_align_to(temperature_setpoint, temperature, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+            lv_obj_align_to(timer, temperature_setpoint, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
+            lv_obj_align_to(tuning, timer, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
         }
-        else
+        else if (current_screen == Screen::kSettingsScren)
         {
-            lv_label_set_text(status, "Disabled");
+            RotaryEncoder::Direction dir = encoder_->getDirection();
         }
-        sprintf(temperature_str, temperature_fmt_str, pid_control_->GetInput());
-        lv_label_set_text(temperature, temperature_str);
-
-        sprintf(temperature_setpoint_str, temperature_setpoint_fmt_str, pid_control_->GetSetpoint());
-        lv_label_set_text(temperature_setpoint, temperature_setpoint_str);
-
-        sprintf(timer_str,
-                timer_fmt_str,
-                pid_control_->GetTimeRemaining() / (1000.0f * 3600.0f),
-                pid_control_->GetTimer() / (1000.0f * 3600.0f));
-        lv_label_set_text(timer, timer_str);
-
-        sprintf(tuning_str, tuning_fmt_str, pid_control_->GetKp(), pid_control_->GetKi(), pid_control_->GetKd());
-        lv_label_set_text(tuning, tuning_str);
-
-        lv_obj_align_to(status, wifi_info, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-        lv_obj_align_to(temperature, status, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-        lv_obj_align_to(temperature_setpoint, temperature, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-        lv_obj_align_to(timer, temperature_setpoint, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
-        lv_obj_align_to(tuning, timer, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
 
         // button.tick();
         // lv_task_handler();
+
         lv_refr_now(NULL);
         lv_timer_handler();
 
